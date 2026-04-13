@@ -14,7 +14,7 @@ body{margin:0;font-family:Arial;background:#05050a;color:#fff;}
 header{background:linear-gradient(90deg,#000,#ff0050,#6a00ff);padding:15px;text-align:center;}
 .container{padding:15px;max-width:1100px;margin:auto;}
 
-input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
+input,select{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 .btn{padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;width:100%;margin-top:6px;}
 .green{background:#00ff99;color:#000;}
@@ -26,7 +26,7 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 #chatBox{position:fixed;bottom:80px;right:20px;width:300px;background:#111;border-radius:12px;display:none;flex-direction:column;z-index:9999;}
 #chatMessages{height:200px;overflow:auto;padding:10px;font-size:13px;}
 
-#ordersPanel{display:block;background:#111;padding:15px;border-radius:12px;margin-top:15px;}
+#ordersPanel{background:#111;padding:10px;margin-top:10px;}
 </style>
 </head>
 
@@ -50,6 +50,7 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 <!-- ADMIN -->
 <div id="adminPanel" style="display:none;">
 <h3>🛠 Add Product</h3>
+
 <input id="name" placeholder="Product name">
 <input id="price" placeholder="Price">
 <input id="img" placeholder="Image URL 1">
@@ -75,63 +76,48 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 <button onclick="sendMsg()" class="btn green">Send</button>
 </div>
 
-<button onclick="toggleChat()" style="position:fixed;bottom:20px;right:20px;background:#ff0050;color:#fff;border:none;padding:12px;border-radius:50px;z-index:9999;">💬</button>
+<button onclick="toggleChat()" style="position:fixed;bottom:20px;right:20px;background:#ff0050;color:#fff;border:none;padding:12px;border-radius:50px;">💬</button>
 
 <script>
 
-// 🔥 FIREBASE
+// FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyAwayCx-surIdWV_sgSFY35J6aHG5l7mMU",
   authDomain: "discountshop-7504f.firebaseapp.com",
   projectId: "discountshop-7504f",
-  storageBucket: "discountshop-7504f.appspot.com",
-  messagingSenderId: "332182883275",
-  appId: "1:332182883275:web:d065adfc66105861a3844e",
-  measurementId: "G-G3N57FCVRF"
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// ✅ MULTIPLE ADMINS HERE
-const ADMINS = [
-  "admin@gmail.com",
-  "yoursecondadmin@gmail.com"
-];
-
+const ADMINS = ["admin@gmail.com"];
 let isAdmin = false;
 
 // LOGIN
 function login(){
 auth.signInWithEmailAndPassword(email.value,password.value)
-.then((user)=>{
-  const userEmail = user.user.email;
+.then(user=>{
+isAdmin = ADMINS.includes(user.user.email);
 
-  isAdmin = ADMINS.includes(userEmail);
-
-  loginBox.style.display="none";
-
-  if(isAdmin){
-    adminPanel.style.display="block";
-    loadOrders();
-  }else{
-    adminPanel.style.display="none";
-  }
+loginBox.style.display="none";
+if(isAdmin){
+adminPanel.style.display="block";
+loadOrders();
+}
 })
 .catch(()=>alert("Login failed"));
 }
 
 // LOGOUT
 function logout(){
-auth.signOut().then(()=>{
-location.reload();
-});
+auth.signOut().then(()=>location.reload());
 }
 
-// ADD PRODUCT (ADMIN ONLY)
+// ADD PRODUCT (LINK IMAGES)
 function addProduct(){
-if(!isAdmin) return alert("Not allowed");
+if(!isAdmin) return;
 
 db.collection("products").add({
 name:name.value,
@@ -146,6 +132,7 @@ alert("Product added");
 // PRODUCTS
 db.collection("products").onSnapshot(snap=>{
 let html="";
+
 snap.forEach(doc=>{
 let p=doc.data();
 
@@ -169,18 +156,15 @@ ${isAdmin ? `<button class="btn red" onclick="deleteProduct('${doc.id}')">Delete
 products.innerHTML=html;
 });
 
-// DELETE PRODUCT (ADMIN ONLY)
+// DELETE
 function deleteProduct(id){
-if(!isAdmin) return alert("Not allowed");
-
-if(confirm("Delete this product?")){
+if(!isAdmin) return;
 db.collection("products").doc(id).delete();
-}
 }
 
 // ORDER
 function order(name,price){
-let cname=prompt("Your Name");
+let cname=prompt("Name");
 let phone=prompt("Phone");
 
 db.collection("orders").add({
@@ -190,7 +174,7 @@ name,price,cname,phone,status:"pending"
 alert("Order sent");
 }
 
-// ORDERS (ADMIN ONLY)
+// ORDERS
 function loadOrders(){
 db.collection("orders").onSnapshot(snap=>{
 let html="";
@@ -219,22 +203,18 @@ const userId = localStorage.getItem("uid") || Date.now().toString();
 localStorage.setItem("uid",userId);
 
 function toggleChat(){
-chatBox.style.display = (chatBox.style.display === "flex") ? "none" : "flex";
+chatBox.style.display = chatBox.style.display==="flex"?"none":"flex";
 }
 
 function sendMsg(){
-if(!chatInput.value) return;
-
 db.collection("chats").add({
 msg:chatInput.value,
 uid:userId,
 time:Date.now()
 });
-
 chatInput.value="";
 }
 
-// CHAT LOAD
 db.collection("chats").orderBy("time").onSnapshot(snap=>{
 let html="";
 snap.forEach(doc=>{
