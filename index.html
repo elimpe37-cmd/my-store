@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DISCOUNT SHOP PRO</title>
+<title>DISCOUNTSHOP 247</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -67,8 +67,8 @@ background:#111;padding:15px;border-radius:12px;width:90%;max-width:400px;
 <body>
 
 <header>
-<h2>⚡ DISCOUNT SHOP PRO</h2>
-<p>Online Store</p>
+<h2>⚡ DISCOUNTSHOP 247</h2>
+<p>🚚 Fast Delivery | 🔒 Secure Shipping</p>
 </header>
 
 <div class="container">
@@ -86,6 +86,10 @@ background:#111;padding:15px;border-radius:12px;width:90%;max-width:400px;
 <input id="time" placeholder="Delivery time">
 
 <button class="btn green" onclick="addProduct()">Add Product</button>
+
+<h3>💬 Reply to Customers</h3>
+<input id="adminMsg" placeholder="Reply message">
+<button class="btn green" onclick="sendAdminMsg()">Send Reply</button>
 </div>
 
 <h3>🛍 Products</h3>
@@ -122,7 +126,7 @@ style="position:fixed;bottom:20px;right:20px;background:#ff0050;color:#fff;borde
 
 <script>
 
-// FIREBASE
+// 🔥 PUT YOUR FIREBASE CONFIG HERE
 const firebaseConfig = {
 apiKey: "YOUR_API_KEY",
 authDomain: "YOUR_AUTH_DOMAIN",
@@ -135,14 +139,14 @@ appId: "YOUR_APP_ID"
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const SECRET_KEY="1234";
+const SECRET_KEY="admin@247shop";
 let selectedProduct=null;
 
-/* ================= ADMIN MODE (HOLD 3 SEC) ================= */
+/* ADMIN MODE (HOLD 3 SEC) */
 let holdTimer;
 document.body.addEventListener("touchstart",()=>{
 holdTimer=setTimeout(()=>{
-let key=prompt("Admin key");
+let key=prompt("Enter Admin Key");
 if(key===SECRET_KEY){
 document.getElementById("adminPanel").style.display="block";
 document.body.classList.add("adminMode");
@@ -151,7 +155,7 @@ document.body.classList.add("adminMode");
 });
 document.body.addEventListener("touchend",()=>clearTimeout(holdTimer));
 
-/* ================= ADD PRODUCT ================= */
+/* ADD PRODUCT */
 function addProduct(){
 db.collection("products").add({
 name:name.value,
@@ -164,7 +168,14 @@ time:time.value||"3-7 days"
 alert("Product Added");
 }
 
-/* ================= SLIDER ================= */
+/* DELETE PRODUCT */
+function deleteProduct(id){
+if(confirm("Delete this product?")){
+db.collection("products").doc(id).delete();
+}
+}
+
+/* SLIDER */
 function slide(id,dir){
 let imgs=document.querySelectorAll(`#p-${id} img`);
 let i=0;
@@ -175,7 +186,7 @@ if(i>=imgs.length)i=0;
 imgs[i].classList.add("active");
 }
 
-/* ================= ORDER ================= */
+/* ORDER */
 function orderProduct(name,price){
 selectedProduct={name,price};
 orderModal.style.display="flex";
@@ -200,7 +211,7 @@ alert("Order Sent!");
 closeOrder();
 }
 
-/* ================= CHAT ================= */
+/* CHAT */
 function toggleChat(){
 chatBox.style.display=chatBox.style.display==="flex"?"none":"flex";
 }
@@ -217,7 +228,19 @@ time:Date.now()
 chatInput.value="";
 }
 
-/* ================= LOAD CHAT ================= */
+function sendAdminMsg(){
+if(!adminMsg.value)return;
+
+db.collection("chats").add({
+message: adminMsg.value,
+sender: "admin",
+time: Date.now()
+});
+
+adminMsg.value="";
+}
+
+/* LOAD CHAT */
 db.collection("chats").orderBy("time").onSnapshot(snap=>{
 let html="";
 snap.forEach(d=>{
@@ -227,7 +250,7 @@ html+=`<div style="margin:5px;padding:6px;background:${m.sender==='admin'?'#00ff
 chatMessages.innerHTML=html;
 });
 
-/* ================= LOAD PRODUCTS ================= */
+/* LOAD PRODUCTS */
 db.collection("products").onSnapshot(snap=>{
 let html="";
 snap.forEach(doc=>{
@@ -236,6 +259,8 @@ let id=doc.id;
 
 html+=`
 <div class="card">
+
+<button class="deleteBtn" onclick="deleteProduct('${id}')">X</button>
 
 <h3>${p.name}</h3>
 
@@ -248,6 +273,8 @@ html+=`
 </div>
 
 <p class="price">$${p.price}</p>
+<p>🚚 Delivery: ${p.delivery}</p>
+<p>⏱ ${p.time}</p>
 
 <button class="btn green" onclick="orderProduct('${p.name}',${p.price})">🛒 Order</button>
 
