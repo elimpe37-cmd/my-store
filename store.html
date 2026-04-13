@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ULTRA GOD MODE STORE</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#05050a;color:#fff;overflow-x:hidden;}
+header{background:linear-gradient(90deg,#000,#ff0050,#6a00ff);padding:18px;text-align:center;position:sticky;top:0;z-index:1000;}
+header h1{margin:0;font-size:28px;}
+.sub{font-size:13px;opacity:.85}
+.ticker{background:#ff0050;padding:8px;white-space:nowrap;overflow:hidden;font-weight:bold;}
+.ticker span{display:inline-block;padding-left:100%;animation:scroll 10s linear infinite;}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+.stats{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:10px;font-size:12px;}
+.stat{background:#151520;padding:8px 10px;border-radius:10px;}
+.container{padding:15px;}
+.search{width:100%;padding:12px;border-radius:10px;border:none;margin-bottom:10px;}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:15px;}
+.card{background:#12121a;border-radius:14px;padding:12px;position:relative;box-shadow:0 0 15px rgba(255,0,80,.15);}
+.badge{position:absolute;top:10px;left:10px;background:#ff0050;padding:5px 8px;font-size:11px;border-radius:6px;}
+.stock{position:absolute;top:10px;right:10px;background:#000;padding:5px 8px;font-size:11px;border-radius:6px;}
+.price{color:#00ff99;font-weight:bold;margin:5px 0;}
+.btn{width:100%;padding:10px;border:none;border-radius:10px;cursor:pointer;margin-top:6px;font-weight:bold;}
+.buy{background:#ff0050;color:#fff}.cart{background:#00c2ff;color:#000}
+.slider img{width:100%;height:170px;object-fit:cover;border-radius:10px;display:none;}
+.slider img.active{display:block;}
+.nav{position:absolute;top:40%;background:rgba(0,0,0,.6);color:#fff;border:none;padding:5px 10px;cursor:pointer}
+.prev{left:5px}.next{right:5px}
+.bottomBar{position:fixed;bottom:0;left:0;right:0;background:#000;padding:10px;display:flex;justify-content:space-between;align-items:center}
+.cartBtn{background:#ff0050;border:none;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);justify-content:center;align-items:center}
+.modal-content{background:#fff;color:#000;padding:15px;border-radius:12px;width:90%;max-width:360px}
+.modal input{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:1px solid #ccc}
+.close{float:right;cursor:pointer}
+.toast{position:fixed;bottom:60px;left:15px;background:#000;padding:10px;border-radius:10px;opacity:0;transition:.3s}
+.toast.show{opacity:1}
+.whatsapp{position:fixed;bottom:70px;right:20px;background:#25D366;color:#fff;padding:12px 15px;border-radius:50px;text-decoration:none;font-weight:bold}
+.admin{background:#151520;margin:10px;padding:10px;border-radius:10px}
+.admin input{width:100%;padding:8px;margin:5px 0;border-radius:8px;border:none}
+.reco{background:#1a1a2a;margin:10px;padding:10px;border-radius:10px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>⚡ ULTRA GOD MODE STORE</h1>
+<div class="sub">AI Sales Engine • Auto Marketing • TikTok Conversion Machine</div>
+</header>
+
+<div class="ticker"><span>🚨 ULTRA MODE ACTIVE • AI RECOMMENDATIONS RUNNING • VIRAL SALES SYSTEM LIVE 🚀</span></div>
+
+<div class="stats">
+<div class="stat">👀 Views: <span id="views">0</span></div>
+<div class="stat">🛒 Orders: <span id="orders">0</span></div>
+<div class="stat">💰 Revenue: $<span id="rev">0</span></div>
+</div>
+
+<div class="container">
+<input class="search" id="search" placeholder="Search products..." onkeyup="render()" />
+
+<div class="admin">
+<b>Admin Panel</b>
+<input id="pname" placeholder="Product name" />
+<input id="pprice" placeholder="Price" />
+<button class="btn buy" onclick="addProduct()">Add Product</button>
+</div>
+
+<div class="reco">
+<b>🔥 AI Recommendation</b>
+<div id="rec">Loading...</div>
+</div>
+
+<div class="products" id="list"></div>
+</div>
+
+<div class="bottomBar">
+<div>🛒 Cart: <span id="cart">0</span></div>
+<button class="cartBtn" onclick="checkout()">Checkout</button>
+</div>
+
+<div class="modal" id="modal">
+<div class="modal-content">
+<span class="close" onclick="closeModal()">✖</span>
+<h3>Checkout</h3>
+<input id="name" placeholder="Name" />
+<input id="phone" placeholder="Phone" />
+<input id="address" placeholder="Address" />
+<button class="btn buy" onclick="sendOrder()">Send Order</button>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let products=JSON.parse(localStorage.getItem('products'))||[
+{name:'Power Bank',price:55,stock:3,img:['https://via.placeholder.com/300','https://via.placeholder.com/300/111']},
+{name:'Earbuds',price:30,stock:5,img:['https://via.placeholder.com/300/ff0000','https://via.placeholder.com/300/00ff00']}
+];
+
+let cart=[];
+let orders=0;
+let revenue=0;
+
+function render(){
+let q=document.getElementById('search').value.toLowerCase();
+let list=document.getElementById('list');list.innerHTML='';
+
+products.filter(p=>p.name.toLowerCase().includes(q)).forEach((p,i)=>{
+list.innerHTML+=`
+<div class='card'>
+<div class='badge'>HOT</div>
+<div class='stock'>${p.stock}</div>
+
+<div class='slider' id='s${i}'>
+<img class='active' src='${p.img[0]}' />
+<img src='${p.img[1]}' />
+<button class='nav prev' onclick='slide(${i},-1)'>❮</button>
+<button class='nav next' onclick='slide(${i},1)'>❯</button>
+</div>
+
+<h3>${p.name}</h3>
+<div class='price'>$${p.price}</div>
+
+<button class='btn cart' onclick='add(${i})'>Add</button>
+<button class='btn buy' onclick='buyNow(${i})'>Buy</button>
+</div>`;
+});
+recommend();
+}
+
+function slide(i,d){let s=document.querySelectorAll(`#s${i} img`);let a=0;s.forEach((x,idx)=>{if(x.classList.contains('active')){a=idx;x.classList.remove('active');}});let n=a+d;if(n<0)n=s.length-1;if(n>=s.length)n=0;s[n].classList.add('active');}
+
+function add(i){cart.push(products[i]);document.getElementById('cart').innerText=cart.length;toast('Added');}
+function buyNow(i){cart=[products[i]];checkout();}
+function checkout(){if(!cart.length)return toast('Empty cart');document.getElementById('modal').style.display='flex';}
+function closeModal(){document.getElementById('modal').style.display='none';}
+
+function sendOrder(){
+let name=document.getElementById('name').value;
+let phone=document.getElementById('phone').value;
+let address=document.getElementById('address').value;
+
+orders++;revenue+=cart.reduce((a,b)=>a+b.price,0);
+
+document.getElementById('orders').innerText=orders;
+document.getElementById('rev').innerText=revenue;
+
+let msg=`🌍 WORLD ORDER\nItems: ${cart.map(c=>c.name).join(', ')}\n${name}\n${phone}\n${address}`;
+let wa='https://wa.me/237000000000?text='+encodeURIComponent(msg);
+window.open(wa);
+
+cart=[];
+document.getElementById('cart').innerText=0;
+closeModal();toast('Order sent');
+}
+
+function recommend(){if(!products.length)return;
+let r=products[Math.floor(Math.random()*products.length)];
+document.getElementById('rec').innerText='🔥 Trending: '+r.name;}
+
+function toast(t){let x=document.getElementById('toast');x.innerText=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),2000);}
+
+function fake(){setInterval(()=>document.getElementById('views').innerText=Math.floor(Math.random()*900+100),2000);}fake();render();
+</script>
+
+</body>
+</html>
