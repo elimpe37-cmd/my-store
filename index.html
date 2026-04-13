@@ -14,6 +14,7 @@ header{background:linear-gradient(90deg,#000,#ff0050,#6a00ff);padding:15px;text-
 .container{padding:15px;max-width:1100px;margin:auto;}
 
 .admin{background:#151520;padding:15px;border-radius:12px;margin-bottom:15px;display:none;}
+
 input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 .btn{padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;width:100%;margin-top:6px;}
@@ -38,6 +39,7 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 <div class="container">
 
+<!-- ADMIN PANEL -->
 <div id="adminPanel" class="admin">
 <h3>🛠 Add Product</h3>
 
@@ -82,8 +84,8 @@ document.addEventListener("keydown", function(e){
   }
 });
 
-// ================= MOBILE ADMIN (HOLD TO OPEN) =================
-let holdTimer;
+// ================= MOBILE ADMIN (HOLD 3 SECONDS) =================
+let holdTimer = null;
 
 document.body.addEventListener("touchstart", function(){
   holdTimer = setTimeout(()=>{
@@ -92,7 +94,7 @@ document.body.addEventListener("touchstart", function(){
       document.getElementById("adminPanel").style.display = "block";
       alert("Admin unlocked");
     }
-  }, 3000); // 3 seconds hold
+  }, 3000);
 });
 
 document.body.addEventListener("touchend", function(){
@@ -101,6 +103,7 @@ document.body.addEventListener("touchend", function(){
 
 // ================= ADD PRODUCT =================
 function addProduct(){
+
 let name = document.getElementById("name").value;
 let price = Number(document.getElementById("price").value);
 let stock = Number(document.getElementById("stock").value);
@@ -124,7 +127,7 @@ time: time || "3-7 days"
 
 alert("Product Added");
 
-// clear
+// clear fields
 document.getElementById("name").value="";
 document.getElementById("price").value="";
 document.getElementById("stock").value="";
@@ -134,9 +137,9 @@ document.getElementById("time").value="";
 }
 
 // ================= LOAD PRODUCTS =================
-db.collection("products").onSnapshot(snap=>{
+db.collection("products").onSnapshot(snapshot=>{
 let html="";
-snap.forEach(doc=>{
+snapshot.forEach(doc=>{
 let p = doc.data();
 
 html += `
