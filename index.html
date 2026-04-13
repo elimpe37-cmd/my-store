@@ -8,7 +8,6 @@
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#05050a;color:#fff;}
@@ -40,7 +39,7 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 <div class="container">
 
-<!-- 🔐 SECRET ADMIN ACCESS (NOT VISIBLE) -->
+<!-- ADMIN PANEL -->
 <div id="adminPanel" class="admin">
 <h3>🛠 Add Product</h3>
 
@@ -61,33 +60,33 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 <script>
 
-// 🔥 FIREBASE CONFIG
+// ================= FIREBASE =================
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  messagingSenderId: "XXXX",
-  appId: "XXXX"
+  projectId: "YOUR_PROJECT_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// 🔐 SECRET KEY TO OPEN ADMIN
+// ================= SECRET KEY =================
 const SECRET_KEY = "1234"; // change this
 
-// 👉 OPEN ADMIN WITH KEY (press CTRL + A to trigger)
-document.addEventListener("keydown", function(e){// 👉 DESKTOP (CTRL + A)
+// ================= ADMIN ACCESS (DESKTOP + MOBILE FIXED) =================
+
+// DESKTOP: CTRL + A
 document.addEventListener("keydown", function(e){
-  if(e.ctrlKey && e.key === "a"){
+  if(e.ctrlKey && e.key.toLowerCase() === "a"){
     let key = prompt("Enter admin key");
     if(key === SECRET_KEY){
       document.getElementById("adminPanel").style.display = "block";
+      alert("Admin unlocked");
     }
   }
 });
 
-// 👉 MOBILE (TAP 10 TIMES)
+// MOBILE: TAP 10 TIMES
 let tapCount = 0;
 let tapTimer;
 
@@ -104,19 +103,12 @@ document.body.addEventListener("touchstart", function(){
     let key = prompt("Enter admin key");
     if(key === SECRET_KEY){
       document.getElementById("adminPanel").style.display = "block";
+      alert("Admin unlocked");
     }
   }
 });
-if(e.ctrlKey && e.key === "a"){
-let key = prompt("Enter admin key");
-if(key === SECRET_KEY){
-  document.getElementById("adminPanel").style.display = "block";
-  alert("Admin mode unlocked");
-}
-}
-});
 
-// ADD PRODUCT
+// ================= ADD PRODUCT =================
 function addProduct(){
 let name = document.getElementById("name").value;
 let price = Number(document.getElementById("price").value);
@@ -140,10 +132,18 @@ time: time || "3-7 days"
 });
 
 alert("Product Added");
+
+// clear
+document.getElementById("name").value="";
+document.getElementById("price").value="";
+document.getElementById("stock").value="";
+document.getElementById("img").value="";
+document.getElementById("delivery").value="";
+document.getElementById("time").value="";
 }
 
-// LOAD PRODUCTS
- db.collection("products").onSnapshot(snap=>{
+// ================= LOAD PRODUCTS =================
+db.collection("products").onSnapshot(snap=>{
 let html="";
 snap.forEach(doc=>{
 let p = doc.data();
