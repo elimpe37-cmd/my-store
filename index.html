@@ -39,7 +39,7 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 <div class="container">
 
-<!-- ADMIN PANEL -->
+<!-- ADMIN -->
 <div id="adminPanel" class="admin">
 <h3>🛠 Add Product</h3>
 
@@ -60,7 +60,7 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 <script>
 
-// 🔥 YOUR FIREBASE (FIXED + READY)
+// 🔥 FIREBASE SETUP (YOUR PROJECT)
 const firebaseConfig = {
   apiKey: "AIzaSyAwayCx-surIdWV_sgSFY35J6aHG5l7mMU",
   authDomain: "discountshop-7504f.firebaseapp.com",
@@ -73,10 +73,10 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// 🔐 SECRET KEY
+// 🔐 ADMIN KEY
 const SECRET_KEY = "1234";
 
-// ================= ADMIN ACCESS (PC) =================
+// ================= ADMIN ACCESS =================
 document.addEventListener("keydown", function(e){
   if(e.ctrlKey && e.key.toLowerCase() === "a"){
     let key = prompt("Enter admin key");
@@ -87,7 +87,7 @@ document.addEventListener("keydown", function(e){
   }
 });
 
-// ================= MOBILE (HOLD TO OPEN ADMIN) =================
+// ================= MOBILE HOLD =================
 let holdTimer;
 
 document.body.addEventListener("touchstart", function(){
@@ -120,17 +120,21 @@ return;
 }
 
 db.collection("products").add({
-name,
-price,
-stock,
-img: img || "https://via.placeholder.com/300",
-delivery: delivery || "0",
-time: time || "3-7 days"
+  name,
+  price,
+  stock,
+  img: img || "https://via.placeholder.com/300",
+  delivery: delivery || "0",
+  time: time || "3-7 days"
+})
+.then(()=>{
+  alert("Product Added");
+})
+.catch(err=>{
+  alert("Error: " + err.message);
 });
 
-alert("Product Added");
-
-// clear inputs
+// clear
 document.getElementById("name").value="";
 document.getElementById("price").value="";
 document.getElementById("stock").value="";
