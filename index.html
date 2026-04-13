@@ -14,7 +14,6 @@ header{background:linear-gradient(90deg,#000,#ff0050,#6a00ff);padding:15px;text-
 .container{padding:15px;max-width:1100px;margin:auto;}
 
 .admin{background:#151520;padding:15px;border-radius:12px;margin-bottom:15px;display:none;}
-
 input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 .btn{padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;width:100%;margin-top:6px;}
@@ -23,10 +22,61 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
 
 .card{background:#12121a;padding:12px;border-radius:12px;}
-.card img{width:100%;height:180px;object-fit:cover;border-radius:10px;margin-top:8px;}
+
+.slider{
+  position:relative;
+  width:100%;
+  height:180px;
+  overflow:hidden;
+  border-radius:10px;
+}
+
+.slider img{
+  width:100%;
+  height:180px;
+  object-fit:cover;
+  display:none;
+}
+
+.slider img.active{display:block;}
+
+.nav{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(0,0,0,0.6);
+  border:none;
+  color:#fff;
+  padding:5px 10px;
+  cursor:pointer;
+}
+
+.prev{left:5px;}
+.next{right:5px;}
 
 .price{color:#00ff99;font-weight:bold;}
 .badge{display:inline-block;padding:4px 8px;background:#ff0050;border-radius:6px;font-size:11px;margin-top:5px;}
+
+/* CHAT */
+#chatBox{
+position:fixed;
+bottom:80px;
+right:20px;
+width:300px;
+background:#111;
+border-radius:12px;
+overflow:hidden;
+display:none;
+flex-direction:column;
+}
+
+#chatMessages{
+height:250px;
+overflow-y:auto;
+padding:10px;
+font-size:13px;
+}
+
 </style>
 </head>
 
@@ -46,7 +96,8 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 <input id="name" placeholder="Product name">
 <input id="price" placeholder="Price">
 <input id="stock" placeholder="Stock">
-<input id="img" placeholder="Image URL">
+<input id="img1" placeholder="Image 1 URL">
+<input id="img2" placeholder="Image 2 URL">
 <input id="delivery" placeholder="Delivery fee">
 <input id="time" placeholder="Delivery time">
 
@@ -58,9 +109,25 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 </div>
 
+<!-- CHAT UI -->
+<div id="chatBox">
+  <div style="background:#ff0050;padding:10px;font-weight:bold;">💬 Live Chat</div>
+
+  <div id="chatMessages"></div>
+
+  <div style="display:flex;">
+    <input id="chatInput" placeholder="Type message..." style="flex:1;padding:10px;border:none;">
+    <button onclick="sendMessage()" style="background:#00ff99;border:none;padding:10px;">➤</button>
+  </div>
+</div>
+
+<button onclick="toggleChat()" style="position:fixed;bottom:20px;right:20px;background:#ff0050;color:#fff;border:none;padding:12px 15px;border-radius:50px;">
+💬 Chat
+</button>
+
 <script>
 
-// 🔥 FIREBASE SETUP (YOUR PROJECT)
+// FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyAwayCx-surIdWV_sgSFY35J6aHG5l7mMU",
   authDomain: "discountshop-7504f.firebaseapp.com",
@@ -73,86 +140,89 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// 🔐 ADMIN KEY
+// ADMIN KEY
 const SECRET_KEY = "1234";
 
-// ================= ADMIN ACCESS =================
-document.addEventListener("keydown", function(e){
-  if(e.ctrlKey && e.key.toLowerCase() === "a"){
-    let key = prompt("Enter admin key");
-    if(key === SECRET_KEY){
-      document.getElementById("adminPanel").style.display = "block";
-      alert("Admin unlocked");
-    }
-  }
+// ADMIN PC
+document.addEventListener("keydown", e=>{
+if(e.ctrlKey && e.key.toLowerCase()==="a"){
+let key = prompt("Enter admin key");
+if(key===SECRET_KEY){
+document.getElementById("adminPanel").style.display="block";
+}
+}
 });
 
-// ================= MOBILE HOLD =================
+// MOBILE HOLD
 let holdTimer;
-
-document.body.addEventListener("touchstart", function(){
-  holdTimer = setTimeout(()=>{
-    let key = prompt("Enter admin key");
-    if(key === SECRET_KEY){
-      document.getElementById("adminPanel").style.display = "block";
-      alert("Admin unlocked");
-    }
-  }, 3000);
+document.body.addEventListener("touchstart",()=>{
+holdTimer=setTimeout(()=>{
+let key=prompt("Enter admin key");
+if(key===SECRET_KEY){
+document.getElementById("adminPanel").style.display="block";
+}
+},3000);
 });
+document.body.addEventListener("touchend",()=>clearTimeout(holdTimer));
 
-document.body.addEventListener("touchend", function(){
-  clearTimeout(holdTimer);
-});
-
-// ================= ADD PRODUCT =================
+// ADD PRODUCT
 function addProduct(){
 
-let name = document.getElementById("name").value;
-let price = Number(document.getElementById("price").value);
-let stock = Number(document.getElementById("stock").value);
-let img = document.getElementById("img").value;
-let delivery = document.getElementById("delivery").value;
-let time = document.getElementById("time").value;
+let name=document.getElementById("name").value;
+let price=Number(document.getElementById("price").value);
+let stock=Number(document.getElementById("stock").value);
 
-if(!name || !price || !stock){
-alert("Fill all fields");
-return;
-}
+let img1=document.getElementById("img1").value;
+let img2=document.getElementById("img2").value;
 
 db.collection("products").add({
-  name,
-  price,
-  stock,
-  img: img || "https://via.placeholder.com/300",
-  delivery: delivery || "0",
-  time: time || "3-7 days"
-})
-.then(()=>{
-  alert("Product Added");
-})
-.catch(err=>{
-  alert("Error: " + err.message);
+name,
+price,
+stock,
+img:[img1||"https://via.placeholder.com/300",img2||"https://via.placeholder.com/300"],
+delivery:document.getElementById("delivery").value||"0",
+time:document.getElementById("time").value||"3-7 days"
 });
 
-// clear
-document.getElementById("name").value="";
-document.getElementById("price").value="";
-document.getElementById("stock").value="";
-document.getElementById("img").value="";
-document.getElementById("delivery").value="";
-document.getElementById("time").value="";
+alert("Product Added");
 }
 
-// ================= LOAD PRODUCTS =================
-db.collection("products").onSnapshot(snapshot=>{
-let html="";
-snapshot.forEach(doc=>{
-let p = doc.data();
+// SLIDER
+function slide(id,dir){
+let imgs=document.querySelectorAll(`#p-${id} img`);
+let index=0;
 
-html += `
+imgs.forEach((img,i)=>{
+if(img.classList.contains("active"))index=i;
+img.classList.remove("active");
+});
+
+index+=dir;
+if(index<0)index=imgs.length-1;
+if(index>=imgs.length)index=0;
+
+imgs[index].classList.add("active");
+}
+
+// LOAD PRODUCTS
+db.collection("products").onSnapshot(snap=>{
+let html="";
+snap.forEach(doc=>{
+let p=doc.data();
+let id=doc.id;
+
+html+=`
 <div class="card">
 <h3>${p.name}</h3>
-<img src="${p.img}">
+
+<div class="slider" id="p-${id}">
+<img class="active" src="${p.img[0]}">
+<img src="${p.img[1]}">
+
+<button class="nav prev" onclick="slide('${id}',-1)">❮</button>
+<button class="nav next" onclick="slide('${id}',1)">❯</button>
+</div>
+
 <p class="price">$${p.price}</p>
 <p>Stock: ${p.stock}</p>
 <span class="badge">🚚 ${p.delivery}</span><br>
@@ -161,7 +231,43 @@ html += `
 `;
 });
 
-document.getElementById("products").innerHTML = html;
+document.getElementById("products").innerHTML=html;
+});
+
+// CHAT SYSTEM
+const chatRef=db.collection("chats");
+
+function toggleChat(){
+let box=document.getElementById("chatBox");
+box.style.display=box.style.display==="flex"?"none":"flex";
+}
+
+function sendMessage(){
+let msg=document.getElementById("chatInput").value;
+if(!msg)return;
+
+chatRef.add({
+message:msg,
+sender:"customer",
+time:Date.now()
+});
+
+document.getElementById("chatInput").value="";
+}
+
+chatRef.orderBy("time").onSnapshot(snap=>{
+let html="";
+snap.forEach(doc=>{
+let m=doc.data();
+
+html+=`
+<div style="margin:5px;padding:6px;border-radius:8px;background:${m.sender==='admin'?'#00ff99':'#222'};color:${m.sender==='admin'?'#000':'#fff'}">
+${m.message}
+</div>
+`;
+});
+
+document.getElementById("chatMessages").innerHTML=html;
 });
 
 </script>
