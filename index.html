@@ -18,10 +18,11 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 .btn{padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;width:100%;margin-top:6px;}
 .green{background:#00ff99;color:#000;}
+.red{background:#ff0033;color:#fff;}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
 
-.card{background:#12121a;padding:12px;border-radius:12px;}
+.card{background:#12121a;padding:12px;border-radius:12px;position:relative;}
 
 .slider{
   position:relative;
@@ -34,7 +35,8 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 .slider img{
   width:100%;
   height:180px;
-  object-fit:cover;
+  object-fit:contain;
+  background:#000;
   display:none;
 }
 
@@ -57,26 +59,22 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 .price{color:#00ff99;font-weight:bold;}
 .badge{display:inline-block;padding:4px 8px;background:#ff0050;border-radius:6px;font-size:11px;margin-top:5px;}
 
-/* CHAT */
-#chatBox{
-position:fixed;
-bottom:80px;
-right:20px;
-width:300px;
-background:#111;
-border-radius:12px;
-overflow:hidden;
-display:none;
-flex-direction:column;
+.deleteBtn{
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:#ff0033;
+  border:none;
+  color:#fff;
+  padding:5px 8px;
+  border-radius:6px;
+  cursor:pointer;
+  display:none;
 }
 
-#chatMessages{
-height:250px;
-overflow-y:auto;
-padding:10px;
-font-size:13px;
+.adminMode .deleteBtn{
+  display:block;
 }
-
 </style>
 </head>
 
@@ -109,22 +107,6 @@ font-size:13px;
 
 </div>
 
-<!-- CHAT UI -->
-<div id="chatBox">
-  <div style="background:#ff0050;padding:10px;font-weight:bold;">💬 Live Chat</div>
-
-  <div id="chatMessages"></div>
-
-  <div style="display:flex;">
-    <input id="chatInput" placeholder="Type message..." style="flex:1;padding:10px;border:none;">
-    <button onclick="sendMessage()" style="background:#00ff99;border:none;padding:10px;">➤</button>
-  </div>
-</div>
-
-<button onclick="toggleChat()" style="position:fixed;bottom:20px;right:20px;background:#ff0050;color:#fff;border:none;padding:12px 15px;border-radius:50px;">
-💬 Chat
-</button>
-
 <script>
 
 // FIREBASE
@@ -140,15 +122,17 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ADMIN KEY
 const SECRET_KEY = "1234";
+let isAdmin = false;
 
-// ADMIN PC
+// ADMIN OPEN
 document.addEventListener("keydown", e=>{
 if(e.ctrlKey && e.key.toLowerCase()==="a"){
-let key = prompt("Enter admin key");
+let key=prompt("Enter admin key");
 if(key===SECRET_KEY){
 document.getElementById("adminPanel").style.display="block";
+document.body.classList.add("adminMode");
+isAdmin=true;
 }
 }
 });
@@ -160,6 +144,8 @@ holdTimer=setTimeout(()=>{
 let key=prompt("Enter admin key");
 if(key===SECRET_KEY){
 document.getElementById("adminPanel").style.display="block";
+document.body.classList.add("adminMode");
+isAdmin=true;
 }
 },3000);
 });
@@ -168,23 +154,26 @@ document.body.addEventListener("touchend",()=>clearTimeout(holdTimer));
 // ADD PRODUCT
 function addProduct(){
 
-let name=document.getElementById("name").value;
-let price=Number(document.getElementById("price").value);
-let stock=Number(document.getElementById("stock").value);
-
-let img1=document.getElementById("img1").value;
-let img2=document.getElementById("img2").value;
-
 db.collection("products").add({
-name,
-price,
-stock,
-img:[img1||"https://via.placeholder.com/300",img2||"https://via.placeholder.com/300"],
+name:document.getElementById("name").value,
+price:Number(document.getElementById("price").value),
+stock:Number(document.getElementById("stock").value),
+img:[
+document.getElementById("img1").value || "https://via.placeholder.com/300",
+document.getElementById("img2").value || "https://via.placeholder.com/300"
+],
 delivery:document.getElementById("delivery").value||"0",
 time:document.getElementById("time").value||"3-7 days"
 });
 
 alert("Product Added");
+}
+
+// DELETE PRODUCT
+function deleteProduct(id){
+if(confirm("Delete this product?")){
+db.collection("products").doc(id).delete();
+}
 }
 
 // SLIDER
@@ -207,12 +196,15 @@ imgs[index].classList.add("active");
 // LOAD PRODUCTS
 db.collection("products").onSnapshot(snap=>{
 let html="";
+
 snap.forEach(doc=>{
 let p=doc.data();
 let id=doc.id;
 
 html+=`
 <div class="card">
+<button class="deleteBtn" onclick="deleteProduct('${id}')">🗑</button>
+
 <h3>${p.name}</h3>
 
 <div class="slider" id="p-${id}">
@@ -232,42 +224,6 @@ html+=`
 });
 
 document.getElementById("products").innerHTML=html;
-});
-
-// CHAT SYSTEM
-const chatRef=db.collection("chats");
-
-function toggleChat(){
-let box=document.getElementById("chatBox");
-box.style.display=box.style.display==="flex"?"none":"flex";
-}
-
-function sendMessage(){
-let msg=document.getElementById("chatInput").value;
-if(!msg)return;
-
-chatRef.add({
-message:msg,
-sender:"customer",
-time:Date.now()
-});
-
-document.getElementById("chatInput").value="";
-}
-
-chatRef.orderBy("time").onSnapshot(snap=>{
-let html="";
-snap.forEach(doc=>{
-let m=doc.data();
-
-html+=`
-<div style="margin:5px;padding:6px;border-radius:8px;background:${m.sender==='admin'?'#00ff99':'#222'};color:${m.sender==='admin'?'#000':'#fff'}">
-${m.message}
-</div>
-`;
-});
-
-document.getElementById("chatMessages").innerHTML=html;
 });
 
 </script>
