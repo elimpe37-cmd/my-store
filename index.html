@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DISCOUNT SHOP PRO</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -39,7 +38,6 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 <div class="container">
 
-<!-- ADMIN PANEL -->
 <div id="adminPanel" class="admin">
 <h3>🛠 Add Product</h3>
 
@@ -71,11 +69,9 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ================= SECRET KEY =================
-const SECRET_KEY = "1234"; // change this
+const SECRET_KEY = "1234";
 
-// ================= ADMIN ACCESS (DESKTOP + MOBILE FIXED) =================
-
-// DESKTOP: CTRL + A
+// ================= DESKTOP ADMIN (CTRL + A) =================
 document.addEventListener("keydown", function(e){
   if(e.ctrlKey && e.key.toLowerCase() === "a"){
     let key = prompt("Enter admin key");
@@ -86,26 +82,21 @@ document.addEventListener("keydown", function(e){
   }
 });
 
-// MOBILE: TAP 10 TIMES
-let tapCount = 0;
-let tapTimer;
+// ================= MOBILE ADMIN (HOLD TO OPEN) =================
+let holdTimer;
 
 document.body.addEventListener("touchstart", function(){
-  tapCount++;
-
-  clearTimeout(tapTimer);
-  tapTimer = setTimeout(()=>{
-    tapCount = 0;
-  }, 2000);
-
-  if(tapCount >= 10){
-    tapCount = 0;
+  holdTimer = setTimeout(()=>{
     let key = prompt("Enter admin key");
     if(key === SECRET_KEY){
       document.getElementById("adminPanel").style.display = "block";
       alert("Admin unlocked");
     }
-  }
+  }, 3000); // 3 seconds hold
+});
+
+document.body.addEventListener("touchend", function(){
+  clearTimeout(holdTimer);
 });
 
 // ================= ADD PRODUCT =================
