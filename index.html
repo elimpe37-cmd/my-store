@@ -3,93 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DISCOUNTSHOP 247</title>
+<title>DISCOUNTSHOP 247 PRO</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#05050a;color:#fff;}
 header{background:linear-gradient(90deg,#000,#ff0050,#6a00ff);padding:15px;text-align:center;}
-
 .container{padding:15px;max-width:1100px;margin:auto;}
 
-.admin{background:#151520;padding:15px;border-radius:12px;margin-bottom:15px;display:none;}
-
 input,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
-
 .btn{padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;width:100%;margin-top:6px;}
 .green{background:#00ff99;color:#000;}
 .red{background:#ff0033;color:#fff;}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
-
-.card{background:#12121a;padding:12px;border-radius:12px;position:relative;}
-
-.slider{position:relative;width:100%;height:180px;overflow:hidden;border-radius:10px;}
-.slider img{width:100%;height:180px;object-fit:contain;background:#000;display:none;}
-.slider img.active{display:block;}
-
-.nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);border:none;color:#fff;padding:5px 10px;cursor:pointer;}
-.prev{left:5px;}
-.next{right:5px;}
-
-.price{color:#00ff99;font-weight:bold;}
-
-.deleteBtn{
-position:absolute;top:10px;right:10px;
-background:#ff0033;border:none;color:#fff;
-padding:5px 8px;border-radius:6px;cursor:pointer;
-display:none;
-}
-.adminMode .deleteBtn{display:block;}
+.card{background:#12121a;padding:12px;border-radius:12px;}
 
 /* CHAT */
-#chatBox{
-position:fixed;bottom:80px;right:20px;width:300px;
-background:#111;border-radius:12px;display:none;
-flex-direction:column;z-index:9999;
-}
+#chatBox{position:fixed;bottom:80px;right:20px;width:300px;background:#111;border-radius:12px;display:none;flex-direction:column;z-index:9999;}
 #chatMessages{height:200px;overflow:auto;padding:10px;font-size:13px;}
 
-/* ORDER */
-#orderModal{
-display:none;position:fixed;inset:0;
-background:rgba(0,0,0,0.8);
-justify-content:center;align-items:center;z-index:9999;
-}
-#orderBox{
-background:#111;padding:15px;border-radius:12px;width:90%;max-width:400px;
-}
+/* ORDER DASHBOARD */
+#ordersPanel{display:none;background:#111;padding:15px;border-radius:12px;margin-top:15px;}
+
 </style>
 </head>
-
 <body>
 
 <header>
-<h2>⚡ DISCOUNTSHOP 247</h2>
+<h2>⚡ DISCOUNTSHOP 247 PRO</h2>
 <p>🚚 Fast Delivery | 🔒 Secure Shipping</p>
 </header>
 
 <div class="container">
 
-<!-- ADMIN -->
-<div id="adminPanel" class="admin">
-<h3>🛠 Add Product</h3>
+<!-- LOGIN -->
+<div id="loginBox">
+<h3>🔐 Admin Login</h3>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button class="btn green" onclick="login()">Login</button>
+</div>
 
+<!-- ADMIN -->
+<div id="adminPanel" style="display:none;">
+<h3>🛠 Add Product</h3>
 <input id="name" placeholder="Product name">
 <input id="price" placeholder="Price">
-<input id="stock" placeholder="Stock">
-<input id="img1" placeholder="Image 1 URL">
-<input id="img2" placeholder="Image 2 URL">
-<input id="delivery" placeholder="Delivery fee">
-<input id="time" placeholder="Delivery time">
-
+<input id="img" placeholder="Image URL">
 <button class="btn green" onclick="addProduct()">Add Product</button>
 
-<h3>💬 Reply to Customers</h3>
-<input id="adminMsg" placeholder="Reply message">
-<button class="btn green" onclick="sendAdminMsg()">Send Reply</button>
+<h3>📦 Orders</h3>
+<div id="ordersPanel"></div>
 </div>
 
 <h3>🛍 Products</h3>
@@ -105,28 +73,11 @@ background:#111;padding:15px;border-radius:12px;width:90%;max-width:400px;
 <button onclick="sendMsg()" class="btn green">Send</button>
 </div>
 
-<button onclick="toggleChat()"
-style="position:fixed;bottom:20px;right:20px;background:#ff0050;color:#fff;border:none;padding:12px;border-radius:50px;z-index:9999;">
-💬 Chat
-</button>
-
-<!-- ORDER -->
-<div id="orderModal">
-<div id="orderBox">
-<h3>📦 Place Order</h3>
-
-<input id="cname" placeholder="Full Name">
-<input id="cphone" placeholder="Phone">
-<textarea id="caddress" placeholder="Delivery Address"></textarea>
-
-<button class="btn green" onclick="submitOrder()">Confirm Order</button>
-<button class="btn red" onclick="closeOrder()">Cancel</button>
-</div>
-</div>
+<button onclick="toggleChat()" style="position:fixed;bottom:20px;right:20px;background:#ff0050;color:#fff;border:none;padding:12px;border-radius:50px;z-index:9999;">💬</button>
 
 <script>
 
-// 🔥 PUT YOUR FIREBASE CONFIG HERE
+// 🔥 PUT YOUR FIREBASE CONFIG
 const firebaseConfig = {
 apiKey: "YOUR_API_KEY",
 authDomain: "YOUR_AUTH_DOMAIN",
@@ -138,151 +89,101 @@ appId: "YOUR_APP_ID"
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
-const SECRET_KEY="admin@247shop";
-let selectedProduct=null;
-
-/* ADMIN MODE (HOLD 3 SEC) */
-let holdTimer;
-document.body.addEventListener("touchstart",()=>{
-holdTimer=setTimeout(()=>{
-let key=prompt("Enter Admin Key");
-if(key===SECRET_KEY){
-document.getElementById("adminPanel").style.display="block";
-document.body.classList.add("adminMode");
+// LOGIN
+function login(){
+auth.signInWithEmailAndPassword(email.value,password.value)
+.then(()=>{
+loginBox.style.display="none";
+adminPanel.style.display="block";
+loadOrders();
+})
+.catch(()=>alert("Login failed"));
 }
-},3000);
-});
-document.body.addEventListener("touchend",()=>clearTimeout(holdTimer));
 
-/* ADD PRODUCT */
+// ADD PRODUCT
 function addProduct(){
 db.collection("products").add({
 name:name.value,
 price:Number(price.value),
-stock:Number(stock.value),
-img:[img1.value||"https://via.placeholder.com/300",img2.value||"https://via.placeholder.com/300"],
-delivery:delivery.value||"0",
-time:time.value||"3-7 days"
+img:img.value
 });
-alert("Product Added");
+alert("Added");
 }
 
-/* DELETE PRODUCT */
-function deleteProduct(id){
-if(confirm("Delete this product?")){
-db.collection("products").doc(id).delete();
-}
-}
-
-/* SLIDER */
-function slide(id,dir){
-let imgs=document.querySelectorAll(`#p-${id} img`);
-let i=0;
-imgs.forEach((img,x)=>{if(img.classList.contains("active"))i=x;img.classList.remove("active");});
-i+=dir;
-if(i<0)i=imgs.length-1;
-if(i>=imgs.length)i=0;
-imgs[i].classList.add("active");
-}
-
-/* ORDER */
-function orderProduct(name,price){
-selectedProduct={name,price};
-orderModal.style.display="flex";
-}
-
-function closeOrder(){
-orderModal.style.display="none";
-}
-
-function submitOrder(){
-db.collection("orders").add({
-product:selectedProduct.name,
-price:selectedProduct.price,
-customerName:cname.value,
-phone:cphone.value,
-address:caddress.value,
-status:"pending",
-time:Date.now()
-});
-
-alert("Order Sent!");
-closeOrder();
-}
-
-/* CHAT */
-function toggleChat(){
-chatBox.style.display=chatBox.style.display==="flex"?"none":"flex";
-}
-
-function sendMsg(){
-if(!chatInput.value)return;
-
-db.collection("chats").add({
-message:chatInput.value,
-sender:"customer",
-time:Date.now()
-});
-
-chatInput.value="";
-}
-
-function sendAdminMsg(){
-if(!adminMsg.value)return;
-
-db.collection("chats").add({
-message: adminMsg.value,
-sender: "admin",
-time: Date.now()
-});
-
-adminMsg.value="";
-}
-
-/* LOAD CHAT */
-db.collection("chats").orderBy("time").onSnapshot(snap=>{
-let html="";
-snap.forEach(d=>{
-let m=d.data();
-html+=`<div style="margin:5px;padding:6px;background:${m.sender==='admin'?'#00ff99':'#222'};color:${m.sender==='admin'?'#000':'#fff'}">${m.message}</div>`;
-});
-chatMessages.innerHTML=html;
-});
-
-/* LOAD PRODUCTS */
+// LOAD PRODUCTS
 db.collection("products").onSnapshot(snap=>{
 let html="";
 snap.forEach(doc=>{
 let p=doc.data();
-let id=doc.id;
-
-html+=`
-<div class="card">
-
-<button class="deleteBtn" onclick="deleteProduct('${id}')">X</button>
-
+html+=`<div class="card">
 <h3>${p.name}</h3>
-
-<div class="slider" id="p-${id}">
-<img class="active" src="${p.img[0]}">
-<img src="${p.img[1]}">
-
-<button class="nav prev" onclick="slide('${id}',-1)">❮</button>
-<button class="nav next" onclick="slide('${id}',1)">❯</button>
-</div>
-
-<p class="price">$${p.price}</p>
-<p>🚚 Delivery: ${p.delivery}</p>
-<p>⏱ ${p.time}</p>
-
-<button class="btn green" onclick="orderProduct('${p.name}',${p.price})">🛒 Order</button>
-
-</div>
-`;
+<img src="${p.img}" style="width:100%;height:150px;object-fit:contain;">
+<p>$${p.price}</p>
+<button class="btn green" onclick="order('${p.name}',${p.price})">Order</button>
+</div>`;
+});
+products.innerHTML=html;
 });
 
-products.innerHTML=html;
+// ORDER
+function order(name,price){
+let cname=prompt("Your Name");
+let phone=prompt("Phone");
+
+db.collection("orders").add({name,price,cname,phone,status:"pending"});
+alert("Order sent");
+}
+
+// LOAD ORDERS
+function loadOrders(){
+db.collection("orders").onSnapshot(snap=>{
+let html="";
+snap.forEach(doc=>{
+let o=doc.data();
+html+=`<div style="background:#222;margin:5px;padding:5px;">
+${o.name} - ${o.cname} (${o.phone}) - ${o.status}
+<button onclick="done('${doc.id}')">Done</button>
+</div>`;
+});
+ordersPanel.innerHTML=html;
+});
+}
+
+function done(id){
+db.collection("orders").doc(id).update({status:"delivered"});
+}
+
+// CHAT (PRIVATE ID)
+const userId = localStorage.getItem("uid") || Date.now().toString();
+localStorage.setItem("uid",userId);
+
+function toggleChat(){
+chatBox.style.display = chatBox.style.display === "flex" ? "none" : "flex";
+}
+
+function sendMsg(){
+if(!chatInput.value) return;
+
+db.collection("chats").add({
+msg:chatInput.value,
+uid:userId,
+time:Date.now()
+});
+chatInput.value="";
+}
+
+// LOAD CHAT
+db.collection("chats").orderBy("time").onSnapshot(snap=>{
+let html="";
+snap.forEach(doc=>{
+let c=doc.data();
+if(c.uid===userId){
+html+=`<div style="background:#222;margin:5px;padding:5px;">${c.msg}</div>`;
+}
+});
+chatMessages.innerHTML=html;
 });
 
 </script>
