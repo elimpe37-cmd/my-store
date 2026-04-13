@@ -36,19 +36,26 @@ input,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:non
 
 .price{color:#00ff99;font-weight:bold;}
 
-.deleteBtn{position:absolute;top:10px;right:10px;background:#ff0033;border:none;color:#fff;padding:5px 8px;border-radius:6px;cursor:pointer;display:none;}
+.deleteBtn{
+position:absolute;top:10px;right:10px;
+background:#ff0033;border:none;color:#fff;
+padding:5px 8px;border-radius:6px;cursor:pointer;
+display:none;
+}
 .adminMode .deleteBtn{display:block;}
 
 /* CHAT */
 #chatBox{
-position:fixed;bottom:80px;right:20px;width:300px;background:#111;
-border-radius:12px;display:none;flex-direction:column;z-index:9999;
+position:fixed;bottom:80px;right:20px;width:300px;
+background:#111;border-radius:12px;display:none;
+flex-direction:column;z-index:9999;
 }
 #chatMessages{height:200px;overflow:auto;padding:10px;font-size:13px;}
 
 /* ORDER */
 #orderModal{
-display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);
+display:none;position:fixed;inset:0;
+background:rgba(0,0,0,0.8);
 justify-content:center;align-items:center;z-index:9999;
 }
 #orderBox{
@@ -79,10 +86,6 @@ background:#111;padding:15px;border-radius:12px;width:90%;max-width:400px;
 <input id="time" placeholder="Delivery time">
 
 <button class="btn green" onclick="addProduct()">Add Product</button>
-
-<button class="btn green" onclick="openOrders()">📦 View Orders</button>
-
-<div id="adminOrders" style="margin-top:10px;"></div>
 </div>
 
 <h3>🛍 Products</h3>
@@ -98,7 +101,8 @@ background:#111;padding:15px;border-radius:12px;width:90%;max-width:400px;
 <button onclick="sendMsg()" class="btn green">Send</button>
 </div>
 
-<button onclick="toggleChat()" style="position:fixed;bottom:20px;right:20px;background:#ff0050;color:#fff;border:none;padding:12px;border-radius:50px;z-index:9999;">
+<button onclick="toggleChat()"
+style="position:fixed;bottom:20px;right:20px;background:#ff0050;color:#fff;border:none;padding:12px;border-radius:50px;z-index:9999;">
 💬 Chat
 </button>
 
@@ -120,21 +124,21 @@ background:#111;padding:15px;border-radius:12px;width:90%;max-width:400px;
 
 // FIREBASE
 const firebaseConfig = {
-apiKey: "AIzaSyAwayCx-surIdWV_sgSFY35J6aHG5l7mMU",
-authDomain: "discountshop-7504f.firebaseapp.com",
-projectId: "discountshop-7504f",
-storageBucket: "discountshop-7504f.appspot.com",
-messagingSenderId: "332182883275",
-appId: "1:332182883275:web:b2ddb10d9a6e7f90a3844e"
+apiKey: "YOUR_API_KEY",
+authDomain: "YOUR_AUTH_DOMAIN",
+projectId: "YOUR_PROJECT_ID",
+storageBucket: "YOUR_BUCKET",
+messagingSenderId: "YOUR_ID",
+appId: "YOUR_APP_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const SECRET_KEY = "1234";
+const SECRET_KEY="1234";
 let selectedProduct=null;
 
-// ADMIN OPEN (HOLD)
+/* ================= ADMIN MODE (HOLD 3 SEC) ================= */
 let holdTimer;
 document.body.addEventListener("touchstart",()=>{
 holdTimer=setTimeout(()=>{
@@ -147,30 +151,20 @@ document.body.classList.add("adminMode");
 });
 document.body.addEventListener("touchend",()=>clearTimeout(holdTimer));
 
-// ADD PRODUCT
+/* ================= ADD PRODUCT ================= */
 function addProduct(){
 db.collection("products").add({
-name:document.getElementById("name").value,
-price:Number(document.getElementById("price").value),
-stock:Number(document.getElementById("stock").value),
-img:[
-document.getElementById("img1").value||"https://via.placeholder.com/300",
-document.getElementById("img2").value||"https://via.placeholder.com/300"
-],
-delivery:document.getElementById("delivery").value||"0",
-time:document.getElementById("time").value||"3-7 days"
+name:name.value,
+price:Number(price.value),
+stock:Number(stock.value),
+img:[img1.value||"https://via.placeholder.com/300",img2.value||"https://via.placeholder.com/300"],
+delivery:delivery.value||"0",
+time:time.value||"3-7 days"
 });
 alert("Product Added");
 }
 
-// DELETE PRODUCT
-function deleteProduct(id){
-if(confirm("Delete product?")){
-db.collection("products").doc(id).delete();
-}
-}
-
-// SLIDER
+/* ================= SLIDER ================= */
 function slide(id,dir){
 let imgs=document.querySelectorAll(`#p-${id} img`);
 let i=0;
@@ -181,88 +175,59 @@ if(i>=imgs.length)i=0;
 imgs[i].classList.add("active");
 }
 
-// ORDER
+/* ================= ORDER ================= */
 function orderProduct(name,price){
 selectedProduct={name,price};
-document.getElementById("orderModal").style.display="flex";
+orderModal.style.display="flex";
 }
 
 function closeOrder(){
-document.getElementById("orderModal").style.display="none";
+orderModal.style.display="none";
 }
 
 function submitOrder(){
 db.collection("orders").add({
 product:selectedProduct.name,
 price:selectedProduct.price,
-customerName:document.getElementById("cname").value,
-phone:document.getElementById("cphone").value,
-address:document.getElementById("caddress").value,
+customerName:cname.value,
+phone:cphone.value,
+address:caddress.value,
 status:"pending",
 time:Date.now()
 });
-alert("Order Sent Successfully!");
+
+alert("Order Sent!");
 closeOrder();
 }
 
-// VIEW ORDERS (ADMIN)
-function openOrders(){
-document.getElementById("adminOrders").style.display="block";
-}
-
-// LOAD ORDERS
-db.collection("orders").orderBy("time").onSnapshot(snap=>{
-let html="";
-snap.forEach(doc=>{
-let o=doc.data();
-html+=`
-<div style="background:#000;padding:8px;margin:5px;border-radius:8px;">
-<p>📦 ${o.product}</p>
-<p>👤 ${o.customerName}</p>
-<p>📞 ${o.phone}</p>
-<p>🏠 ${o.address}</p>
-<p>📌 ${o.status}</p>
-
-<button onclick="db.collection('orders').doc('${doc.id}').update({status:'delivered'})"
-style="background:#00ff99;border:none;padding:5px;">
-✔ Done
-</button>
-</div>
-`;
-});
-document.getElementById("adminOrders").innerHTML=html;
-});
-
-// CHAT
+/* ================= CHAT ================= */
 function toggleChat(){
-let box=document.getElementById("chatBox");
-box.style.display=box.style.display==="flex"?"none":"flex";
+chatBox.style.display=chatBox.style.display==="flex"?"none":"flex";
 }
 
 function sendMsg(){
-let msg=document.getElementById("chatInput").value;
-if(!msg)return;
+if(!chatInput.value)return;
 
 db.collection("chats").add({
-message:msg,
+message:chatInput.value,
 sender:"customer",
 time:Date.now()
 });
 
-document.getElementById("chatInput").value="";
+chatInput.value="";
 }
 
-// LOAD CHAT
+/* ================= LOAD CHAT ================= */
 db.collection("chats").orderBy("time").onSnapshot(snap=>{
 let html="";
 snap.forEach(d=>{
 let m=d.data();
 html+=`<div style="margin:5px;padding:6px;background:${m.sender==='admin'?'#00ff99':'#222'};color:${m.sender==='admin'?'#000':'#fff'}">${m.message}</div>`;
 });
-document.getElementById("chatMessages").innerHTML=html;
+chatMessages.innerHTML=html;
 });
 
-// LOAD PRODUCTS
+/* ================= LOAD PRODUCTS ================= */
 db.collection("products").onSnapshot(snap=>{
 let html="";
 snap.forEach(doc=>{
@@ -290,7 +255,7 @@ html+=`
 `;
 });
 
-document.getElementById("products").innerHTML=html;
+products.innerHTML=html;
 });
 
 </script>
