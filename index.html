@@ -60,20 +60,23 @@ input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
 <script>
 
-// ================= FIREBASE =================
+// 🔥 YOUR FIREBASE (FIXED + READY)
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID"
+  apiKey: "AIzaSyAwayCx-surIdWV_sgSFY35J6aHG5l7mMU",
+  authDomain: "discountshop-7504f.firebaseapp.com",
+  projectId: "discountshop-7504f",
+  storageBucket: "discountshop-7504f.appspot.com",
+  messagingSenderId: "332182883275",
+  appId: "1:332182883275:web:b2ddb10d9a6e7f90a3844e"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ================= SECRET KEY =================
+// 🔐 SECRET KEY
 const SECRET_KEY = "1234";
 
-// ================= DESKTOP ADMIN (CTRL + A) =================
+// ================= ADMIN ACCESS (PC) =================
 document.addEventListener("keydown", function(e){
   if(e.ctrlKey && e.key.toLowerCase() === "a"){
     let key = prompt("Enter admin key");
@@ -84,8 +87,8 @@ document.addEventListener("keydown", function(e){
   }
 });
 
-// ================= MOBILE ADMIN (HOLD 3 SECONDS) =================
-let holdTimer = null;
+// ================= MOBILE (HOLD TO OPEN ADMIN) =================
+let holdTimer;
 
 document.body.addEventListener("touchstart", function(){
   holdTimer = setTimeout(()=>{
@@ -127,7 +130,7 @@ time: time || "3-7 days"
 
 alert("Product Added");
 
-// clear fields
+// clear inputs
 document.getElementById("name").value="";
 document.getElementById("price").value="";
 document.getElementById("stock").value="";
