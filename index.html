@@ -1,31 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DISCOUNT SHOP PRO MAX</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DISCOUNT SHOP PRO</title>
 
-<!-- FIREBASE -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#05050a;color:#fff;}
-header{background:linear-gradient(90deg,#000,#ff0050,#6a00ff);padding:15px;text-align:center;position:sticky;top:0;}
+header{background:linear-gradient(90deg,#000,#ff0050,#6a00ff);padding:15px;text-align:center;}
 .container{padding:15px;max-width:1100px;margin:auto;}
 
-.admin{background:#151520;padding:15px;border-radius:12px;margin-bottom:15px;}
-input,textarea{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:none;}
+.admin{background:#151520;padding:15px;border-radius:12px;margin-bottom:15px;display:none;}
+input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:none;}
 
-.btn{padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;width:100%;margin-top:5px;}
+.btn{padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;width:100%;margin-top:6px;}
 .green{background:#00ff99;color:#000;}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
 
-.card{background:#12121a;padding:10px;border-radius:12px;}
+.card{background:#12121a;padding:12px;border-radius:12px;}
 .card img{width:100%;height:180px;object-fit:cover;border-radius:10px;margin-top:8px;}
+
 .price{color:#00ff99;font-weight:bold;}
-.small{font-size:12px;opacity:.8;}
 .badge{display:inline-block;padding:4px 8px;background:#ff0050;border-radius:6px;font-size:11px;margin-top:5px;}
 </style>
 </head>
@@ -33,22 +34,22 @@ input,textarea{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:non
 <body>
 
 <header>
-<h2>⚡ DISCOUNT SHOP PRO MAX</h2>
-<p class="small">Store with Delivery & Shipping System</p>
+<h2>⚡ DISCOUNT SHOP PRO</h2>
+<p>Online Store</p>
 </header>
 
 <div class="container">
 
-<!-- ADMIN PANEL -->
-<div class="admin">
-<h3>🛠 Add Product + Delivery Info</h3>
+<!-- 🔐 SECRET ADMIN ACCESS (NOT VISIBLE) -->
+<div id="adminPanel" class="admin">
+<h3>🛠 Add Product</h3>
 
 <input id="name" placeholder="Product name">
 <input id="price" placeholder="Price">
 <input id="stock" placeholder="Stock">
-<input id="img" placeholder="Image URL (optional)">
-<input id="delivery" placeholder="Delivery fee (e.g. 5)">
-<input id="time" placeholder="Delivery time (e.g. 3-7 days)">
+<input id="img" placeholder="Image URL">
+<input id="delivery" placeholder="Delivery fee">
+<input id="time" placeholder="Delivery time">
 
 <button class="btn green" onclick="addProduct()">Add Product</button>
 </div>
@@ -56,14 +57,11 @@ input,textarea{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:non
 <h3>🛍 Products</h3>
 <div class="grid" id="products"></div>
 
-<h3>📦 Orders (with Shipment Info)</h3>
-<div class="grid" id="orders"></div>
-
 </div>
 
 <script>
 
-// FIREBASE CONFIG
+// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -75,9 +73,22 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ================= ADD PRODUCT (WITH DELIVERY) =================
-function addProduct(){
+// 🔐 SECRET KEY TO OPEN ADMIN
+const SECRET_KEY = "1234"; // change this
 
+// 👉 OPEN ADMIN WITH KEY (press CTRL + A to trigger)
+document.addEventListener("keydown", function(e){
+if(e.ctrlKey && e.key === "a"){
+let key = prompt("Enter admin key");
+if(key === SECRET_KEY){
+  document.getElementById("adminPanel").style.display = "block";
+  alert("Admin mode unlocked");
+}
+}
+});
+
+// ADD PRODUCT
+function addProduct(){
 let name = document.getElementById("name").value;
 let price = Number(document.getElementById("price").value);
 let stock = Number(document.getElementById("stock").value);
@@ -86,7 +97,7 @@ let delivery = document.getElementById("delivery").value;
 let time = document.getElementById("time").value;
 
 if(!name || !price || !stock){
-alert("Fill required fields");
+alert("Fill all fields");
 return;
 }
 
@@ -96,18 +107,14 @@ price,
 stock,
 img: img || "https://via.placeholder.com/300",
 delivery: delivery || "0",
-time: time || "3-7 days",
-created:new Date().toISOString()
+time: time || "3-7 days"
 });
 
-alert("Product added successfully!");
-
-// clear
-name.value="";
+alert("Product Added");
 }
 
-// ================= LOAD PRODUCTS =================
-db.collection("products").onSnapshot(snap=>{
+// LOAD PRODUCTS
+ db.collection("products").onSnapshot(snap=>{
 let html="";
 snap.forEach(doc=>{
 let p = doc.data();
@@ -118,7 +125,7 @@ html += `
 <img src="${p.img}">
 <p class="price">$${p.price}</p>
 <p>Stock: ${p.stock}</p>
-<span class="badge">🚚 Delivery: $${p.delivery}</span><br>
+<span class="badge">🚚 ${p.delivery}</span><br>
 <span class="badge">⏱ ${p.time}</span>
 </div>
 `;
@@ -127,29 +134,7 @@ html += `
 document.getElementById("products").innerHTML = html;
 });
 
-// ================= LOAD ORDERS =================
-db.collection("orders").onSnapshot(snap=>{
-let html="";
-snap.forEach(doc=>{
-let o = doc.data();
-
-html += `
-<div class="card">
-<h3>${o.name}</h3>
-<p>📞 ${o.phone}</p>
-<p>📍 ${o.address}</p>
-<p>🛍 Items: ${o.items}</p>
-<p class="badge">🚚 Shipping: ${o.shipping || 'Not set'}</p>
-<p class="badge">📦 Status: ${o.status || 'Processing'}</p>
-</div>
-`;
-});
-
-document.getElementById("orders").innerHTML = html;
-});
-
 </script>
 
 </body>
 </html>
-
